@@ -78,8 +78,7 @@ module uart_tx
             r_ready         <= 'h0;
 
             r_idx           <= 'h0;
-            r_tx            <= 'h1;
-            
+            r_tx            <= 'h1;  
         end
 
         else begin
@@ -138,8 +137,6 @@ module uart_tx
                             r_next_word_size = 4'h9;
                         else
                             r_next_word_size = i_config[4:1];
-
-                        r_next_state = READY;
                     end
                 end
             end
