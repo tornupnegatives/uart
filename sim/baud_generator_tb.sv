@@ -18,7 +18,7 @@ module baud_generator_tb;
     always #5 i_clk = ~i_clk;
 
     real t_in  = 2.0;
-    real t_out = 0.0;
+    real t_out = 7.0;
 
     initial begin
         $dumpfile("baud_generator.vcd");
@@ -78,23 +78,19 @@ module baud_generator_tb;
             #t_in i_update_baud = 'h1;
         end
 
-        repeat (2) @(posedge i_clk)
+        @(posedge i_clk)
             #t_in i_update_baud = 'h0;
 
-        // Allow for passage of first low clock
         if (~o_clk) begin
-            $display("Waiting for active clock edge...");
-            @(posedge o_clk);
+            $display("Waiting for first active clock\n");
+            @(posedge i_clk)
+                @(posedge o_clk)
+                    @(negedge i_clk);
         end
 
-        for (int i = 0; i < baud_div[baud_rate] * 2; i++) begin
+        for (int i = 1; i < baud_div[baud_rate] - 1; i++) begin
             @(posedge i_clk) begin
                 case(i)
-                    0: begin
-                        #t_out assert(o_rising_edge && o_clk && ~o_falling_edge && ~o_stable) else
-                        $fatal(1, "ERROR: Rising edge failure");
-                    end
-
                     baud_div[baud_rate] / 4: begin
                         #t_out assert(~o_rising_edge && ~o_falling_edge && o_stable && o_clk) else
                         $fatal(1, "ERROR: Stable edge failure");
