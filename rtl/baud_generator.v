@@ -142,15 +142,14 @@ module baud_generator
                         r_next_clk      = ~r_clk;
                     end
 
-                    else begin
+                    else
                         r_next_fast = r_fast_cycle + 'h1;
-                        
-                        // Update status indicators
-                        r_next_rising_edge  = (r_fast_cycle == r_cdiv / 2 - 1) ? ~r_clk : 'h0;
-                        r_next_falling_edge = (r_fast_cycle == r_cdiv / 2 - 1) ? r_clk  : 'h0;
-                        r_next_stable       = (r_fast_cycle == r_cdiv / 4 - 1) && r_clk;
-                    end
                 end
+
+                // Update status indicators
+                r_next_rising_edge  = (r_fast_cycle == r_cdiv / 2 - 1) ? ~r_clk : 'h0;
+                r_next_falling_edge = (r_fast_cycle == r_cdiv / 2 - 1) ? r_clk  : 'h0;
+                r_next_stable       = (r_fast_cycle == r_cdiv / 4 - 1) && r_clk;
             end
         endcase
     end
