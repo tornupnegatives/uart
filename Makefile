@@ -16,6 +16,11 @@ test-uart-tx:
 	$(COMPILER) $(CFLAGS) -o test_uart_tx rtl/parity_checker.v rtl/baud_generator.v rtl/uart_tx.v sim/uart_tx_tb.sv
 	$(SIM) ./test_uart_tx
 	rm -f test_uart_tx
+
+test-uart:
+	$(COMPILER) $(CFLAGS) -o test_uart rtl/parity_checker.v rtl/baud_generator.v rtl/uart_tx.v rtl/uart_rx.v rtl/uart_top.v sim/uart_tb.sv
+	$(SIM) ./test_uart
+	rm -f test_uart
 	
 clean:
 	rm -f *.vcd
