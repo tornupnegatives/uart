@@ -4,16 +4,18 @@ module uart_tb;
     logic           i_clk;
     logic           i_rst_n;
 
-    logic [10:0]    i_config;
+    logic           i_request_tx;
+    logic           i_ws_n;
+    logic           i_rs_n;
+    logic [3:0]     i_addr;
 
-    logic           i_tx_valid;
-    logic [8:0]     i_tx_parallel;
-    logic [8:0]     o_rx_parallel;
+    logic [8:0]     i_data;
+    logic [8:0]     o_data;
 
-    logic           o_tx;
     logic           i_rx;
+    logic           o_tx;
 
-    logic           o_tx_ready;
+    logic           o_ready;
     logic           o_rx_error;
     logic           o_rx_valid;
 
@@ -34,16 +36,29 @@ module uart_tb;
 
     initial begin
         $display("Simulation start");
-        i_clk           = 0;
-        i_rst_n         = 1;
-        i_config        = 0;
-        i_tx_valid      = 0;
-        i_tx_parallel   = 0;
-        i_rx            = 0;
+        i_clk           = 'h0;
+        i_rst_n         = 'h1;
+        i_request_tx    = 'h0;
+        i_ws_n          = 'h1;
+        i_rs_n          = 'h1;
+        i_addr          = 'h0;
+        i_data          = 'h0;
+        i_rx            = 'h0;
 
         reset;
         repeat (5)
             send_word($urandom_range(0, 255));
+
+        @(posedge i_clk) begin
+            i_addr = 'h7;
+            i_data = 'h9;
+            #t_in i_ws_n = 'h0;
+        end
+
+        @(posedge i_clk)
+            #t_in i_ws_n = 'h1;
+        
+        send_word($urandom_range(0, 255));
 
         $display("Simulation finish");
         $finish;
@@ -61,9 +76,9 @@ module uart_tb;
             #t_in i_rst_n = 1;
 
         @(posedge i_clk)
-            #t_out assert(o_rx_parallel === 'h0 &&
+            #t_out assert(o_data        === 'h0 &&
                           o_tx          === 'h1 &&
-                          o_tx_ready    === 'h1 &&
+                          o_ready       === 'h1 &&
                           o_rx_error    === 'h0 &&
                           o_rx_valid    === 'h0) else
                     $fatal(1, "ERROR: Incorrect status outputs after reset");
@@ -76,12 +91,12 @@ module uart_tb;
         $display("Sending x%b...", word);
 
         @(posedge i_clk) begin
-            i_tx_parallel = word;
-            #t_in i_tx_valid = 'h1;
+            i_data = word;
+            #t_in i_request_tx = 'h1;
         end
 
         @(posedge i_clk)
-            #t_in i_tx_valid = 'h0;
+            #t_in i_request_tx = 'h0;
 
         $display("Waiting for RX...");
         @(posedge o_rx_valid or posedge o_rx_error) begin
@@ -89,7 +104,7 @@ module uart_tb;
                 $fatal(1, "Error flag raised during RX");
 
             @(posedge i_clk)
-                #t_out rx = o_rx_parallel;
+                #t_out rx = o_data;
         end
 
         $display("Received x%b\n", rx);

@@ -18,7 +18,7 @@ test-uart-tx:
 	rm -f test_uart_tx
 
 test-uart:
-	$(COMPILER) $(CFLAGS) -o test_uart rtl/parity_checker.v rtl/baud_generator.v rtl/uart_tx.v rtl/uart_rx.v rtl/uart_top.v sim/uart_tb.sv
+	$(COMPILER) $(CFLAGS) -o test_uart rtl/parity_checker.v rtl/baud_generator.v rtl/uart_tx.v rtl/uart_rx.v rtl/sync.v rtl/uart_top.v sim/uart_tb.sv
 	$(SIM) ./test_uart
 	rm -f test_uart
 	

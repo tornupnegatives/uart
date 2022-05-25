@@ -60,7 +60,7 @@ module baud_generator
     reg [1:0] r_state, r_next_state;
 
     // Clock divisor
-    reg [9:0]   r_config, r_next_config;
+    reg [3:0]   r_config, r_next_config;
     reg [31:0]  r_cdiv,   r_next_cdiv;
 
     // Counter
