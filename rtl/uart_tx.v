@@ -1,4 +1,11 @@
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
+
+///////////////////////////////////////////////////////////////////////////////
+// Module Name:     UART TX
+// Target Devices:  Xilinx Artix-7
+// Description:     Configurable UART TX module
+// Author:          Joseph Bellahcen <tornupnegatives@gmail.com>
+///////////////////////////////////////////////////////////////////////////////
 
 module uart_tx
     (
@@ -22,7 +29,6 @@ module uart_tx
 
         // UART interface
         input                   i_uart_clk_enable,
-        input                   i_tx,
         output                  o_tx,
 
         output                  o_ready
@@ -56,9 +62,6 @@ module uart_tx
     wire w_parity;
     parity_checker PC (.i_word(r_tx_parallel), .o_parity(w_parity));
     defparam PC.WORD_SIZE = 9;
-
-    // Slow clock
-    reg [3:0] r_slow_count, r_next_slow_count;
     
     // Loop variable for input parsing
     integer i;
