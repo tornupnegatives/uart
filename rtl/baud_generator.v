@@ -68,8 +68,9 @@ module baud_generator
 
     // Slow clock
     reg r_clk,          r_next_clk;
-    reg r_rising_edge,  r_falling_edge;
-    reg r_stable;
+    reg r_rising_edge,  r_next_rising_edge;
+    reg r_falling_edge, r_next_falling_edge;
+    reg r_stable,       r_next_stable;
 
     // State machine logic
     always @(posedge i_clk) begin
@@ -79,6 +80,9 @@ module baud_generator
             r_cdiv          <= BAUD0;
             r_fast_cycle    <= 'h0;
             r_clk           <= 'h0;
+            r_rising_edge   <= 'h0;
+            r_falling_edge  <= 'h0;
+            r_stable        <= 'h0;
         end
 
         else begin
@@ -87,20 +91,22 @@ module baud_generator
             r_cdiv          <= r_next_cdiv;
             r_fast_cycle    <= r_next_fast;
             r_clk           <= r_next_clk;
+            r_rising_edge   <= r_next_rising_edge;
+            r_falling_edge  <= r_next_falling_edge;
+            r_stable        <= r_next_stable;
         end
     end
 
     always @(*) begin
         // Defaults
-        r_next_state    = r_state;
-        r_next_config   = r_config;
-        r_next_cdiv     = r_cdiv;
-        r_next_fast     = r_fast_cycle;
-        r_next_clk      = r_clk;
-        
-        r_rising_edge   = 'h0;
-        r_falling_edge  = 'h0;
-        r_stable        = 'h0;
+        r_next_state            = r_state;
+        r_next_config           = r_config;
+        r_next_cdiv             = r_cdiv;
+        r_next_fast             = r_fast_cycle;
+        r_next_clk              = r_clk;
+        r_next_rising_edge      = r_rising_edge;
+        r_next_falling_edge     = r_falling_edge;
+        r_next_stable           = r_stable;
 
         case(r_state)
             SETUP: begin
@@ -122,7 +128,6 @@ module baud_generator
              end       
 
             RUN: begin    
-                // Toggle slow clock when fast clock hits divisor
                 if (i_update_baud) begin
                     r_next_config = i_baud_select;
                     r_next_fast     = 'h0;
@@ -135,15 +140,15 @@ module baud_generator
                     if (r_fast_cycle == r_cdiv/2) begin
                         r_next_fast     = 'h0;
                         r_next_clk      = ~r_clk;
-                        
-                        r_rising_edge   = ~r_clk;
-                        r_falling_edge  = r_clk;
-                       
                     end
 
                     else begin
                         r_next_fast = r_fast_cycle + 'h1;
-                        r_stable = (r_fast_cycle == r_cdiv / 4) && r_clk;
+                        
+                        // Update status indicators
+                        r_next_rising_edge  = (r_fast_cycle == r_cdiv / 2 - 1) ? ~r_clk : 'h0;
+                        r_next_falling_edge = (r_fast_cycle == r_cdiv / 2 - 1) ? r_clk  : 'h0;
+                        r_next_stable       = (r_fast_cycle == r_cdiv / 4 - 1) && r_clk;
                     end
                 end
             end
@@ -156,4 +161,3 @@ module baud_generator
     assign o_falling_edge = r_falling_edge;
     assign o_stable = r_stable;
 endmodule
-

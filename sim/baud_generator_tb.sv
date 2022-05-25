@@ -13,7 +13,8 @@ module baud_generator_tb;
     baud_generator DUT(.*);
 
     // 100 MHz clock
-    defparam DUT.FPGA_CLK = 100_000_000;
+    //defparam DUT.FPGA_CLK = 100_000_000;
+    localparam FPGA_CLK = 100_000_000;
     always #5 i_clk = ~i_clk;
 
     real t_in  = 2.0;
@@ -58,18 +59,18 @@ module baud_generator_tb;
         input [3:0] baud_rate;
 
         static integer baud_div[9:0];
-        baud_div[0] = DUT.FPGA_CLK / 9600;
-        baud_div[1] = DUT.FPGA_CLK / 19200;
-        baud_div[2] = DUT.FPGA_CLK / 38400;
-        baud_div[3] = DUT.FPGA_CLK / 57600;
-        baud_div[4] = DUT.FPGA_CLK / 115200;
-        baud_div[5] = DUT.FPGA_CLK / 230400;
-        baud_div[6] = DUT.FPGA_CLK / 460800;
-        baud_div[7] = DUT.FPGA_CLK / 921600;
-        baud_div[8] = DUT.FPGA_CLK / 1000000;
-        baud_div[9] = DUT.FPGA_CLK / 1500000;
+        baud_div[0] = FPGA_CLK / 9600;
+        baud_div[1] = FPGA_CLK / 19200;
+        baud_div[2] = FPGA_CLK / 38400;
+        baud_div[3] = FPGA_CLK / 57600;
+        baud_div[4] = FPGA_CLK / 115200;
+        baud_div[5] = FPGA_CLK / 230400;
+        baud_div[6] = FPGA_CLK / 460800;
+        baud_div[7] = FPGA_CLK / 921600;
+        baud_div[8] = FPGA_CLK / 1000000;
+        baud_div[9] = FPGA_CLK / 1500000;
 
-        $display("Running clock at %d Hz", DUT.FPGA_CLK / baud_div[baud_rate]);
+        $display("Running clock at %d Hz", FPGA_CLK / baud_div[baud_rate]);
 
         // Configure baud rate
         @(posedge i_clk) begin
@@ -90,7 +91,7 @@ module baud_generator_tb;
             @(posedge i_clk) begin
                 case(i)
                     0: begin
-                        #t_out assert(((o_rising_edge && ~o_clk) || (~o_rising_edge && o_clk)) && ~o_falling_edge && ~o_stable) else
+                        #t_out assert(o_rising_edge && o_clk && ~o_falling_edge && ~o_stable) else
                         $fatal(1, "ERROR: Rising edge failure");
                     end
 
@@ -107,5 +108,4 @@ module baud_generator_tb;
             end
         end
     endtask
-
 endmodule
