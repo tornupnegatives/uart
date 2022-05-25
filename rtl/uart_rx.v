@@ -139,13 +139,14 @@ module uart_rx
             end
 
             RX_START: begin
-                // Prepare RX register and report error if timing mismatch
+                // Prepare RX register
                 if (i_uart_clk_enable) begin
                     r_next_idx = 'h0;
                     r_next_rx_parallel = 'h0;
                     r_next_rx_valid = 'h0;
 
-                    r_next_state = i_rx ? ERROR : RX_DATA;
+                    // If start bit is not valid, return to READY
+                    r_next_state = i_rx ? READY : RX_DATA;
                 end
             end
 
