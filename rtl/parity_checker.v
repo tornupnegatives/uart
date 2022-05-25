@@ -17,7 +17,7 @@ module parity_checker
     );
 
     integer idx;
-    reg [3:0] r_count;        // Max: 8
+    reg [$clog2(WORD_SIZE):0] r_count;        // Max: 8
     reg       r_parity;
 
     always @(*) begin
