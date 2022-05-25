@@ -110,6 +110,8 @@ module baud_generator
 
         case(r_state)
             SETUP: begin
+                r_next_cdiv = BAUD0;
+                
                 case (r_config)
                     0:          r_next_cdiv = BAUD0;
                     1:          r_next_cdiv = BAUD1;
@@ -121,7 +123,6 @@ module baud_generator
                     7:          r_next_cdiv = BAUD7;
                     8:          r_next_cdiv = BAUD8;
                     9:          r_next_cdiv = BAUD9;
-                    default:    r_next_cdiv = BAUD0;
                 endcase
 
                 r_next_state = RUN;

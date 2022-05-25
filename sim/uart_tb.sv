@@ -100,11 +100,12 @@ module uart_tb;
 
         $display("Waiting for RX...");
         @(posedge o_rx_valid or posedge o_rx_error) begin
-            if (o_rx_error)
-                $fatal(1, "Error flag raised during RX");
-
-            @(posedge i_clk)
+            @(posedge i_clk) begin
                 #t_out rx = o_data;
+
+                if (o_rx_error)
+                    $fatal(1, "Error flag raised during RX");
+            end
         end
 
         $display("Received x%b\n", rx);
