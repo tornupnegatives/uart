@@ -6,9 +6,7 @@ module uart_tx_tb;
     logic [6:0]             i_config;
     logic [8:0]             i_tx_parallel;
     logic                   i_tx_valid;
-    logic                   i_uart_clk;
-    logic                   i_uart_clk_rising_edge;
-    logic                   i_uart_clk_falling_edge;
+    logic                   i_uart_clk_enable;
     logic                   i_tx;
     logic                   o_tx;
     logic                   o_ready;
@@ -18,14 +16,12 @@ module uart_tx_tb;
     // 100 MHz clock
     always #5 i_clk = ~i_clk;
     real t_in  = 2.0;
-    real t_out = 0.0;
+    real t_out = 7.0;
 
     baud_generator BD(
         .i_clk,
         .i_rst_n,
-        .o_clk(i_uart_clk),
-        .o_rising_edge(i_uart_clk_rising_edge),
-        .o_falling_edge(i_uart_clk_falling_edge),
+        .o_rising_edge(i_uart_clk_enable),
         .o_stable(r_sample)
     );
 
@@ -124,38 +120,30 @@ module uart_tx_tb;
             #t_in i_tx_valid = 'h1;
         end
 
-        // Start bit
         @(posedge r_sample) begin
             #t_in i_tx_valid = 'h0;
-
-            assert(o_tx === 'h0) else
-            $fatal(1, "Could not detect start bit");
         end
 
         // Data
         for (int i = 0; i < i_config[4:1]; i++)
             @(posedge r_sample)
-                rx[i] = o_tx;
+                #t_out rx[i] = o_tx;
 
         // Parity
         if (i_config[5])
             @(posedge r_sample)
-                assert(o_tx === ($countones(data) % 2 == 0)) else
+                #t_out assert(o_tx === ($countones(data) % 2 == 0)) else
                 $fatal(1, "Incorrect parity bit");
 
         // Stop
         repeat (i_config[6] + 1)
             @(posedge r_sample)
-                assert(o_tx === 'h1) else
+                #t_out assert(o_tx === 'h1) else
                 $fatal(1, "Could not detect stop bit");
 
-        // Wait for ready
-        $display("Waiting for ready...");
-        @(posedge i_uart_clk_falling_edge)  // Last falling edge
-            @(negedge i_uart_clk_falling_edge)
-                repeat (2) @(posedge i_clk);
-        assert(o_tx === 'h1 && o_ready === 'h1) else
-        $fatal(1, "Failed to enter ready state");
+        @(posedge i_clk)
+            #t_out assert(o_tx === 'h1 && o_ready === 'h1) else
+            $fatal(1, "Failed to enter ready state");
 
         $display("Received x%x\n", rx);
         assert(rx === data) else

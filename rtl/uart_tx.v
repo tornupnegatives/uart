@@ -21,9 +21,7 @@ module uart_tx
         input                   i_tx_valid,
 
         // UART interface
-        input                   i_uart_clk,
-        input                   i_uart_clk_rising_edge,
-        input                   i_uart_clk_falling_edge,
+        input                   i_uart_clk_enable,
         input                   i_tx,
         output                  o_tx,
 
@@ -31,16 +29,15 @@ module uart_tx
     );
 
     // FSM
-    localparam [6:0]
-        READY           = 7'b0000001,
-        BUILD_PACKET    = 7'b0000010,
-        TX_START        = 7'b0000100,
-        TX_DATA         = 7'b0001000,
-        TX_PARITY       = 7'b0010000,
-        TX_STOP         = 7'b0100000,
-        TX_FINISH       = 7'b1000000;
+    localparam [5:0]
+        READY           = 6'b000001,
+        BUILD_PACKET    = 6'b000010,
+        TX_START        = 6'b000100,
+        TX_DATA         = 6'b001000,
+        TX_PARITY       = 6'b010000,
+        TX_STOP         = 6'b100000;
     
-    reg [6:0] r_state, r_next_state;
+    reg [5:0] r_state, r_next_state;
 
     // Configuration
     reg [3:0]   r_word_size,        r_next_word_size;
@@ -52,17 +49,19 @@ module uart_tx
     reg         r_ready,            r_next_ready;
 
     // UART registers
-    reg [12:0]  r_packet,           r_next_packet;
     reg [3:0]   r_idx,              r_next_idx;
     reg         r_tx,               r_next_tx;
 
     // Parity checker
-    reg r_parity;
-    parity_checker PC (.i_word(r_tx_parallel), .o_parity(r_parity));
+    wire w_parity;
+    parity_checker PC (.i_word(r_tx_parallel), .o_parity(w_parity));
     defparam PC.WORD_SIZE = 9;
 
     // Slow clock
     reg [3:0] r_slow_count, r_next_slow_count;
+    
+    // Loop variable for input parsing
+    integer i;
 
     always @(posedge i_clk) begin
         if (~i_rst_n) begin
@@ -75,7 +74,6 @@ module uart_tx
             r_tx_parallel   <= 'h0;
             r_ready         <= 'h0;
 
-            r_packet        <= 'h0;
             r_idx           <= 'h0;
             r_tx            <= 'h1;
             
@@ -91,7 +89,6 @@ module uart_tx
             r_tx_parallel   <= r_next_tx_parallel;
             r_ready         <= r_next_ready;
 
-            r_packet        <= r_next_packet;
             r_idx           <= r_next_idx;
             r_tx            <= r_next_tx;
             
@@ -108,7 +105,6 @@ module uart_tx
         r_next_tx_parallel      = r_tx_parallel;
         r_next_ready            = r_ready;
 
-        r_next_packet           = r_packet;
         r_next_idx              = r_idx;
         r_next_tx               = r_tx;
         
@@ -121,8 +117,8 @@ module uart_tx
                         r_next_tx_parallel  = 0;
 
                         // Only store word_size number of bits
-                        for (r_idx = 0; r_idx < 9; r_idx = r_idx + 1)
-                            r_next_tx_parallel[r_idx] = (r_idx < r_word_size) ? i_tx_parallel[r_idx] : 0;
+                        for (i = 0; i < 9; i = i + 1)
+                            r_next_tx_parallel[i] = (i < r_word_size) ? i_tx_parallel[i] : 0;
 
                         r_next_ready        = 'h0;
                         r_next_state        = BUILD_PACKET;
@@ -151,23 +147,20 @@ module uart_tx
             // │         1 │ 5-9 bits    │ Optional: 0 or 1      │ 'b1 or 'b11 │
             // └───────────┴─────────────┴───────────────────────┴─────────────┘
             BUILD_PACKET: begin
-                //r_next_packet = {1'h0, r_tx_parallel, r_parity, 2'b11};
                 r_next_idx = 0;
                 r_next_state = TX_START;
             end
 
             TX_START: begin
-                if (i_uart_clk_rising_edge) begin
+                if (i_uart_clk_enable) begin
                     r_next_tx = 'h0;
-                    //r_next_tx = r_packet[12];
-                    //r_next_idx = 3;
                     r_next_state = TX_DATA;
                 end
             end
 
             TX_DATA: begin
                 //  change so that it only transmits ONCE per uart clock
-                if (i_uart_clk_rising_edge) begin
+                if (i_uart_clk_enable) begin
                     r_next_tx = r_tx_parallel[r_idx];
                     r_next_idx = r_idx + 1;
 
@@ -179,28 +172,18 @@ module uart_tx
             end
 
             TX_PARITY: begin
-                if (i_uart_clk_rising_edge) begin
-                    //r_next_idx = 'h1;
-                    //r_next_tx = r_packet[2];
-                    r_next_tx = r_parity;
+                if (i_uart_clk_enable) begin
+                    r_next_tx = w_parity;
                     r_next_state = TX_STOP;
                 end
             end
 
             TX_STOP: begin
-                if (i_uart_clk_rising_edge) begin
-                    //r_next_tx = r_packet[r_idx];
+                if (i_uart_clk_enable) begin
                     r_next_tx = 'h1;
                     r_next_idx = r_idx - 1;
 
-                    r_next_state = (r_n_stop_bits && r_idx) ? TX_STOP : TX_FINISH;
-                end
-            end
-
-            // Wait until end of last UART clock to enter ready state
-            TX_FINISH: begin
-                if (i_uart_clk_falling_edge) begin
-                    r_next_state = READY;
+                    r_next_state = (r_n_stop_bits && r_idx) ? TX_STOP : READY;
                 end
             end
         endcase
