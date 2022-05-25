@@ -18,7 +18,7 @@ module uart_rx
         // │      6       │          5          │    4...1    │      0       │
         // ├──────────────┼─────────────────────┼─────────────┼──────────────┤
         // │ N STOP BITS  │ PARITY CHECK ENABLE │ WORD SIZE   │ STORE CONFIG │
-        // │ Default: 0   │ Default: 1          │ Default: 8  │              │
+        // │ Default: 0   │ Default: 0          │ Default: 8  │              │
         // │ 0=1, 1=2     │                     │ Range [5,9] │              │
         // └──────────────┴─────────────────────┴─────────────┴──────────────┘
         input [6:0]             i_config,
@@ -74,7 +74,7 @@ module uart_rx
             r_rx_parallel       <= 'h0;
 
             r_word_size         <= 'h8;
-            r_parity_enable     <= 'h1;
+            r_parity_enable     <= 'h0;
             r_n_stop_bits       <= 'h0;
 
             r_ready             <= 'h0;
@@ -156,7 +156,7 @@ module uart_rx
                     r_next_rx_parallel[r_idx] = i_rx;
 
                     if (r_idx == r_word_size - 1)
-                        r_next_state = RX_PARITY;
+                        r_next_state = r_parity_enable ? RX_PARITY : RX_STOP;
                 end
             end
 
