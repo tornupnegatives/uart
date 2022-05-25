@@ -1,0 +1,12 @@
+# macOS files
+.DS_Store
+
+# Temporary files
+*.swp
+
+# Vivado files
+vivado.jou
+vivado.log
+
+# Waveforms
+*.vcd
