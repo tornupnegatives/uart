@@ -12,18 +12,22 @@ module parity_checker
     (
         // FPGA interface
         input [7:0] i_word,
-        output reg  o_parity
+        output      o_parity
     );
 
     integer idx;
-    reg [3:0] count;        // Max: 8
+    reg [3:0] r_count;        // Max: 8
+    reg       r_parity;
 
     always @(*) begin
-        count = 'h0;
+        r_count  = 'h0;
+        r_parity = 'h0;
 
         for (idx = 0; idx < 8; idx = idx + 1)
-            count = count + i_word[idx];
+            r_count = r_count + i_word[idx];
 
-        o_parity = (count % 2 == 0);
+        r_parity = (r_count % 2 == 0);
     end
+    
+    assign o_parity = r_parity;
 endmodule

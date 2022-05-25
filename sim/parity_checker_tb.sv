@@ -14,15 +14,17 @@ module parity_checker_tb;
     initial begin
         $display("Simulation start");
         i_word = 8'b00000000;
+        
+        #105
 
         for (int i = 0; i < 8; i++) begin
-            #5 i_word = {i_word[6:0], 1'h1};
+            #1 i_word = {i_word[6:0], 1'h1};
 
             if ((i + 1) % 2 == 0)
-                #1 assert (o_parity) else
+                #20 assert (o_parity) else
                     $fatal(1, "Incorrect parity for %b", i_word);
             else
-                #1 assert (~o_parity) else
+                #20 assert (~o_parity) else
                     $fatal(1, "Incorrect parity for %b", i_word);
         end
 
