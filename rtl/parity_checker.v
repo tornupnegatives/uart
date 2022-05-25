@@ -9,9 +9,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 module parity_checker
+    #(parameter WORD_SIZE = 8)
     (
         // FPGA interface
-        input [7:0] i_word,
+        input [WORD_SIZE-1:0] i_word,
         output      o_parity
     );
 
@@ -23,7 +24,7 @@ module parity_checker
         r_count  = 'h0;
         r_parity = 'h0;
 
-        for (idx = 0; idx < 8; idx = idx + 1)
+        for (idx = 0; idx < WORD_SIZE; idx = idx + 1)
             r_count = r_count + i_word[idx];
 
         r_parity = (r_count % 2 == 0);
